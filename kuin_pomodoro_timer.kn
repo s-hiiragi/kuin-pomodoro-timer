@@ -1,0 +1,82 @@
+{
+@file    pomodoro_timer.kn
+@author  s_hiiragi <https://github.com/s-hiiragi>
+}
+
+; TODO ウィンドウを最前面表示にする
+; TODO 起動時にウィンドウを画面右上の端に移動する
+; FIXME 時間帯の分が05:60のように表示される問題がある
+
+{
+作業(休憩)時間帯クラス
+}
+class PomorodPeriod()
+	+var isWorkTime: bool
+	+var beginMinutes: int
+	+var endMinutes: int
+end class
+
+{
+指定した分から作業(休憩)時間帯を取得する
+
+@param minutes - 分
+
+@retval period - 作業(休憩)時間帯オブジェクト
+@retval period.isWorkTime   - trueなら作業時間帯、falseなら休憩時間帯
+@retval period.beginMinutes - 開始時間[分]
+@retval period.endMinutes   - 終了時間[分]
+}
+func getPomodoroPeriod(minutes: int): @PomorodPeriod
+	var period: @PomorodPeriod :: #@PomorodPeriod
+	
+	var m: int :: minutes % 30
+	if(0 <= m & m < 25)
+		do period.isWorkTime :: true
+		do period.beginMinutes :: (minutes / 30) * 30
+		do period.endMinutes :: period.beginMinutes + 25
+	else
+		do period.isWorkTime :: false
+		do period.beginMinutes :: (minutes / 30) * 30 + 25
+		do period.endMinutes :: period.beginMinutes + 5
+	end if
+	
+	ret period
+end func
+
+func main()
+	const mainWidth: int :: 280
+	const mainHeight: int :: 40
+	
+	var wndMain: wnd@Wnd :: wnd@makeWnd(null, %fix, mainWidth, mainHeight, "Pomodoro Timer")
+	var drawMain: wnd@Draw :: wnd@makeDraw(wndMain, 0, 0, mainWidth, mainHeight, %scale, %scale, false)
+	var font1: draw@Font :: draw@makeFont(null, 12, false, false, false, 12.0)
+	
+	while(wnd@act())
+		var years: int
+		var months: int
+		var days: int
+		var hours: int
+		var minutes: int
+		var seconds: int
+		var t: int :: lib@now()
+		do lib@intToLocalDate(t, &years, &months, &days, &hours, &minutes, &seconds)
+		
+		var pomodoroPeriod: @PomorodPeriod :: @getPomodoroPeriod(minutes)
+		
+		var text: []char ::
+		|hours.toStrFmt("02d") ~ ":" ~ minutes.toStrFmt("02d") ~ ":" ~
+		|seconds.toStrFmt("02d") ~
+		|" (" ~
+		|hours.toStrFmt("02d") ~ ":" ~
+		|pomodoroPeriod.beginMinutes.toStrFmt("02d") ~
+		|"-" ~
+		|hours.toStrFmt("02d") ~ ":" ~
+		|pomodoroPeriod.endMinutes.toStrFmt("02d") ~
+		|")"
+		
+		var color: int :: pomodoroPeriod.isWorkTime ?(0xFFFFFF00, 0xFF00FF00)
+		
+		do font1.draw(0.0, 0.0, text, color)
+		do draw@render(30)
+	end while
+end func
