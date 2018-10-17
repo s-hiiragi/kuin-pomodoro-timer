@@ -1,4 +1,4 @@
-# Pomodoro Timer (Kuin)
+# Pomodoro Timer (written in Kuin)
 
 Kuinで書かれたシンプルなPomodoro Timer(GUI)です。
 
